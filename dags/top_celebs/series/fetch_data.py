@@ -1,5 +1,6 @@
-from airflow.providers.http.hooks.http import HttpAsyncHook
 import asyncio
+import aiohttp
+from itertools import batched
 
 from include.constants import HEADERS, URL_SERIES_DETAILS
 
@@ -27,20 +28,30 @@ def get_series_info(result):
     return series_info
 
 
-async def request_series_info(async_hook: HttpAsyncHook, series_id):
-    url_series_details = URL_SERIES_DETAILS.format(str(series_id))
-    await asyncio.sleep(1)
-    response = await async_hook.run(url_series_details, headers=HEADERS)
-    series_data = await response.json()
-    series_info = get_series_info(series_data)
-    return series_info
+async def request_series_info(series_id):
+    url_series_details = URL_SERIES_DETAILS.format(series_id)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url_series_details, headers=HEADERS) as response:
+            await asyncio.sleep(1)
+            series_data = await response.json()
+            print(series_data)
+            series_info = get_series_info(series_data)
+
+            return series_info
 
 
-def batch_request_series_info(series_ids):
-    async_hook = HttpAsyncHook(method="GET", http_conn_id="TMDB_API")
+def batch_request_series_info(ti):
+    series_ids = ti.xcom_pull(key='series_ids', task_ids='request_series_celebs')
     loop = asyncio.get_event_loop()
+    
+    tasks = [request_series_info(id) for id in series_ids]
+    all_series_info = []
 
-    tasks = [request_series_info(async_hook, id) for id in series_ids]
-    all_series_info = loop.run_until_complete(asyncio.gather(*tasks))
+    for batch in batched(tasks, 100):
+        series_info_batch = loop.run_until_complete(asyncio.gather(*batch))
+        all_series_info.extend(series_info_batch)
 
-    return all_series_info
+    print(len(all_series_info))
+    ti.xcom_push(key="all_series_info", value= all_series_info)
+    
