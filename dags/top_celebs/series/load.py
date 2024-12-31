@@ -9,17 +9,24 @@ def load_series(ti):
     for series in all_series_info:
         series_rows.append(tuple(series.values()))
 
-    with pg_hook.get_cursor() as cursor:
-        execute_values(
-            cursor,
-            """
-            INSERT INTO series (id, title, genres, origin, release_date, seasons, status, score) VALUES %s 
-            ON CONFLICT (id) DO UPDATE
-            SET
-                release_date = EXCLUDED.release_date,
-                seasons = EXCLUDED.seasons,
-                status = EXCLUDED.status,
-                score = EXCLUDED.score
-            """,
-            series_rows
-        )
+    print(len(series_rows))
+    pg_hook.insert_rows(
+        "series", 
+        series_rows, 
+        replace=True, 
+        replace_index="id", 
+        target_fields=["id", "title", "genres", "origin", "release_date", "seasons", "status", "score"])
+    # with pg_hook.get_cursor() as cursor:
+    #     execute_values(
+    #         cursor,
+    #         """
+    #         INSERT INTO series (id, title, genres, origin, release_date, seasons, status, score) VALUES %s 
+    #         ON CONFLICT (id) DO UPDATE
+    #         SET
+    #             release_date = EXCLUDED.release_date,
+    #             seasons = EXCLUDED.seasons,
+    #             status = EXCLUDED.status,
+    #             score = EXCLUDED.score
+    #         """,
+    #         series_rows
+    #     )

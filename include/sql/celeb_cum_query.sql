@@ -1,7 +1,7 @@
 WITH last_celeb_cum AS (
     SELECT *
     FROM celebs_cum
-    WHERE updated_at = {{ params.current_date }} - INTERVAL '7 days'
+    WHERE updated_at = DATE('2024-12-23') 
 ),
 current_top_celeb AS (
     SELECT 
@@ -12,7 +12,7 @@ current_top_celeb AS (
             ELSE EXTRACT(year FROM ingest_at)::INT
         END as period
     FROM celebs_raw
-    WHERE ingest_at = {{ params.current_date }}
+    WHERE ingest_at = DATE('2024-12-30')
 )
 
 INSERT INTO celebs_cum
@@ -39,7 +39,7 @@ SELECT
     ingest_at as updated_at
 FROM last_celeb_cum as lc
 FULL OUTER JOIN current_top_celeb as ct
-ON lc.id = ct.id
+ON lc.id = ct.id;
 
 
 -- INSERT INTO celebs_cum

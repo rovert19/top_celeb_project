@@ -2,7 +2,7 @@ from airflow.decorators import dag
 from airflow.operators.python import PythonOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
-from pendulum import datetime
+from datetime import datetime, date
 from dags.top_celebs.scrapping.extract import extract_celebs
 from dags.top_celebs.celebs.fetch_data import batch_request_top_celebs_info, batch_request_movies_celeb, batch_request_series_celeb
 from dags.top_celebs.celebs.load import load_top_celebs, load_celeb_series, load_celeb_movies
@@ -14,8 +14,8 @@ from dags.top_celebs.series.load import load_series
 
 @dag(
     dag_id="etl_top_celebs",
-    start_date=datetime(2024, 12, 23),
-    schedule="@monthly",
+    start_date=datetime(2024, 12, 31),
+    schedule="0 5 * * MON",
     template_searchpath= ['/usr/local/airflow/include/sql'],
     catchup=False
 )
@@ -72,8 +72,30 @@ def etl_top_celebs():
 
     celeb_cumulative_data = SQLExecuteQueryOperator(
         task_id="celeb_cumulative_data",
-        parameters= { "current_date": "{{ ds }}" },
-        sql="celeb_cum_query.sql"
+        conn_id="PG_CONN",
+        # parameters= { "current_date": date.today() },
+        sql="/celeb_cum_query.sql"
+    )
+
+    celeb_top_10_week_data = SQLExecuteQueryOperator(
+        task_id="celeb_top_10_week",
+        conn_id="PG_CONN",
+        # parameters= { "current_date": date.today() },
+        sql="/celeb_top_10_week.sql"
+    )
+
+    celeb_leader_week_data = SQLExecuteQueryOperator(
+        task_id="celeb_leader_week",
+        conn_id="PG_CONN",
+        # parameters= { "current_date": date.today() },
+        sql="/celeb_leader_week.sql"
+    )
+
+    celeb_most_top_weeks_data = SQLExecuteQueryOperator(
+        task_id="celeb_most_top_weeks",
+        conn_id="PG_CONN",
+        # parameters= { "current_date": date.today() },
+        sql="/celeb_total_weeks.sql"
     )
 
     extract_top_celebs >> request_top_celebs >> [insert_top_celebs, request_movies_celebs, request_series_celebs]
@@ -83,6 +105,8 @@ def etl_top_celebs():
     request_series_celebs >> [ insert_celeb_series, request_series ]
     request_series >> insert_series
 
+    celeb_cumulative_data >> [celeb_top_10_week_data, celeb_most_top_weeks_data]
+    [celeb_cumulative_data, insert_celeb_movies, insert_celeb_series, insert_movies, insert_series] >> celeb_leader_week_data
 
 etl_top_celebs()
 

@@ -10,12 +10,16 @@ def load_top_celebs(ti):
     for celeb in top_celebs_info:
         top_celebs_rows.append(tuple(celeb.values()))
     
-    with pg_hook.get_cursor() as cursor:
-        execute_values(
-            cursor,
-            "INSERT INTO celebs_raw (id, name, imdb_id, roles, gender, known_for, rank, ingest_at) VALUES %s",
-            top_celebs_rows
-        )
+    print(len(top_celebs_rows))
+    pg_hook.insert_rows("celebs_raw", top_celebs_rows)
+    # with pg_hook.get_conn() as conn: 
+    #     with conn.cursor() as cursor:
+    #         execute_values(
+    #             cursor,
+    #             "INSERT INTO celebs_raw (id, name, imdb_id, roles, gender, known_for, rank, ingest_at) VALUES %s",
+    #             top_celebs_rows
+    #         )
+    #     conn.close()
 
 
 def load_celeb_movies(ti):
@@ -23,12 +27,14 @@ def load_celeb_movies(ti):
     pg_hook = PostgresHook(postgres_conn_id="PG_CONN")
 
     celeb_movie_ids = [tuple(celeb_movie_id) for celeb_movie_id in celeb_movie_ids]
-    with pg_hook.get_cursor() as cursor:
-        execute_values(
-            cursor,
-            "INSERT INTO celeb_movies (id, movie_id) VALUES %s ON CONFLICT (id, movie_id) DO NOTHING",
-            celeb_movie_ids
-        )
+    print(len(celeb_movie_ids))
+    pg_hook.insert_rows("celeb_movies", celeb_movie_ids, replace=False)
+    # with pg_hook.get_cursor() as cursor:
+    #     execute_values(
+    #         cursor,
+    #         "INSERT INTO celeb_movies (id, movie_id) VALUES %s ON CONFLICT (id, movie_id) DO NOTHING",
+    #         celeb_movie_ids
+    #     )
 
 
 def load_celeb_series(ti):
@@ -36,9 +42,11 @@ def load_celeb_series(ti):
     pg_hook = PostgresHook(postgres_conn_id="PG_CONN")
     
     celeb_series_ids = [tuple(celeb_series_id) for celeb_series_id in celeb_series_ids]
-    with pg_hook.get_cursor() as cursor:
-        execute_values(
-            cursor,
-            "INSERT INTO celeb_series (id, series_id) VALUES %s ON CONFLICT (id, series_id) DO NOTHING",
-            celeb_series_ids
-        )
+    print(len(celeb_series_ids))
+    pg_hook.insert_rows("celeb_series", celeb_series_ids, replace=False)
+    # with pg_hook.get_cursor() as cursor:
+    #     execute_values(
+    #         cursor,
+    #         "INSERT INTO celeb_series (id, series_id) VALUES %s ON CONFLICT (id, series_id) DO NOTHING",
+    #         celeb_series_ids
+    #     )

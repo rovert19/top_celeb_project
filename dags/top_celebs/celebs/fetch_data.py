@@ -58,7 +58,7 @@ async def request_celeb_info(celeb):
                 "gender": celeb_info["gender"],
                 "known_for": celeb_info["known_for"],
                 "rank": celeb[3],
-                "ingest_at": datetime(2024, 12, 23).isoformat()
+                "ingest_at": datetime(2024, 12, 30).isoformat()
             }
 
 
@@ -91,7 +91,7 @@ def batch_request_movies_celeb(ti):
         celeb_movie_ids.extend(celeb_movie_pairs)
         movies_ids.extend(cast_celeb)
 
-    ti.xcom_push(key='celeb_movie_ids', value= celeb_movie_ids)
+    ti.xcom_push(key='celeb_movie_ids', value= set(celeb_movie_ids))
     ti.xcom_push(key='movies_ids', value= set(movies_ids))
 
 
@@ -113,6 +113,6 @@ def batch_request_series_celeb(ti):
         celeb_series_ids.extend(celeb_series_pairs)
         series_ids.extend(cast_celeb)
 
-    ti.xcom_push(key='celeb_series_ids', value= celeb_series_ids)
+    ti.xcom_push(key='celeb_series_ids', value= set(celeb_series_ids))
     ti.xcom_push(key='series_ids', value= set(series_ids))
 

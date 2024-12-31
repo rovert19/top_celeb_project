@@ -78,7 +78,6 @@ class Scrapper:
 
     def start_setup(self, url):
         self.driver.get(url)
-        print(self.driver.page_source)
     
     def teardown(self):
         self.driver.quit()
